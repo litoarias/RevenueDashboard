@@ -1,54 +1,56 @@
 # Revenue Dashboard
 
-App SwiftUI (iOS y macOS) que junta en un único panel, y en euros, lo que ganas con tus apps:
+A SwiftUI app (iOS and macOS) that brings everything you earn from your apps into a single dashboard, in euros:
 
-- **Apple App Store Connect**: suscripciones, compras in-app y apps de pago (proceeds netos, informes diarios de ventas).
-- **Google AdMob**: ingresos por publicidad (bruto estimado).
-- **Firebase / Google Analytics 4**: pestaña «Uso» con usuarios activos, sesiones y eventos por app.
+- **Apple App Store Connect**: subscriptions, in-app purchases and paid apps (net proceeds, from the daily sales reports).
+- **Google AdMob**: advertising revenue (estimated gross).
+- **Firebase / Google Analytics 4**: a "Usage" tab with active users, sessions and events per app.
 
-Convierte todas las divisas a EUR con el tipo de cambio diario del BCE.
+All currencies are converted to EUR using the daily ECB exchange rate.
 
-<p align="center"><img src="docs/dashboard.png" width="420" alt="Panel de ingresos (datos de demostración)"></p>
+<p align="center"><img src="docs/dashboard.png" width="420" alt="Revenue dashboard (demo data)"></p>
 
-> La captura usa datos de relleno (`-demo`), no cifras reales.
+> The screenshot uses placeholder data (`-demo` launch argument), not real figures.
 
-## Características
+## Features
 
-- Periodos de 7 d, 30 d, 90 d, 6 m y 1 año; la elección se recuerda entre sesiones.
-- Gráfico por día apilado por origen (publicidad / in-app / suscripciones) y desglose por app.
-- Indica hasta qué día tiene datos cada proveedor.
-- Caché en disco de los informes cerrados de Apple y del tipo de cambio.
-- Credenciales en el Keychain; nada se envía a servidores de terceros salvo Apple, Google y el BCE.
+- 7 d, 30 d, 90 d, 6 m and 1 y periods; your choice is remembered between launches.
+- Daily chart stacked by source (ads / in-app / subscriptions) and a per-app breakdown.
+- Shows how far each provider's data goes.
+- On-disk cache for closed Apple reports and exchange rates.
+- Credentials are stored in the Keychain; nothing is sent anywhere except Apple, Google and the ECB.
 
-## Estructura
+> The UI text is currently in Spanish.
 
-| Carpeta | Contenido |
+## Project layout
+
+| Folder | Contents |
 |---|---|
-| `Sources/RevenueKit` | Clientes de ASC, AdMob y GA4, parser de informes, conversión BCE, Keychain |
-| `App` | Interfaz SwiftUI |
-| `Sources/RevenueProbe` | Herramienta de línea de comandos para depurar los datos de Apple |
-| `Tests` | Tests con Swift Testing |
+| `Sources/RevenueKit` | App Store Connect, AdMob and GA4 clients, report parser, ECB conversion, Keychain |
+| `App` | SwiftUI interface |
+| `Sources/RevenueProbe` | Command-line tool to debug the Apple data |
+| `Tests` | Tests written with Swift Testing |
 
-## Puesta en marcha
+## Getting started
 
-Requisitos: Xcode 16+, [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+Requirements: Xcode 16+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
-1. Copia la configuración local (está en `.gitignore`):
+1. Create your local configuration (git-ignored):
    ```bash
    cp Config/Local.example.xcconfig Config/Local.xcconfig
    ```
-   y rellena tu bundle ID, tu Team ID y el client ID de Google (paso 3).
-2. Genera el proyecto y ábrelo:
+   and fill in your bundle ID, Team ID and Google client ID (step 3).
+2. Generate the Xcode project and open it:
    ```bash
    xcodegen generate && open RevenueDashboard.xcodeproj
    ```
-3. **Google (AdMob y Analytics)**: en [Google Cloud Console](https://console.cloud.google.com) crea un cliente OAuth de tipo **iOS** con tu bundle ID y activa las APIs *AdMob*, *Analytics Admin* y *Analytics Data*. Pega su client ID en `GOOGLE_CLIENT_ID`. Usa PKCE, no hay client secret.
-4. **Apple**: en App Store Connect → Usuarios y acceso → Integraciones, crea una clave de API con acceso a **Ventas** (o Finanzas). En la app, Ajustes → introduce Issuer ID, Key ID, tu *vendor number* (Ventas y tendencias → Informes) e importa la clave `.p8`.
+3. **Google (AdMob and Analytics)**: in the [Google Cloud Console](https://console.cloud.google.com), create an **iOS** OAuth client using your bundle ID and enable the *AdMob*, *Analytics Admin* and *Analytics Data* APIs. Put its client ID in `GOOGLE_CLIENT_ID`. It uses PKCE, so there is no client secret.
+4. **Apple**: in App Store Connect go to Users and Access → Integrations and create an API key with access to **Sales** (or Finance). In the app, open Settings and enter the Issuer ID, Key ID and your *vendor number* (Sales and Trends → Reports), then import the `.p8` key.
 
-Para ver el diseño sin credenciales, arranca la app con el argumento `-demo`.
+To preview the design without any credentials, launch the app with the `-demo` argument.
 
-## Notas
+## Notes
 
-- Los informes de Apple se publican con 1-2 días de retraso; AdMob puede revisar importes recientes.
-- Las ventas de Apple usan *Developer Proceeds* (tras comisión e impuestos), por eso difieren del importe de venta.
-- El importe en EUR puede diferir ligeramente de lo que ves en Tendencias de App Store Connect, que muestra la divisa original (p. ej. USD).
+- Apple publishes reports with a 1–2 day delay, and AdMob may revise recent amounts.
+- Apple figures use *Developer Proceeds* (after commission and taxes), so they differ from the customer price.
+- The EUR amount can differ slightly from App Store Connect Trends, which shows the original currency (e.g. USD).
