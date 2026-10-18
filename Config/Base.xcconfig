@@ -1,0 +1,6 @@
+// Valores por defecto (públicos). Para usar los tuyos, copia Local.example.xcconfig a Local.xcconfig.
+PRODUCT_BUNDLE_IDENTIFIER = com.example.revenuedashboard
+DEVELOPMENT_TEAM =
+GOOGLE_CLIENT_ID = YOUR-CLIENT-ID.apps.googleusercontent.com
+
+#include? "Local.xcconfig"

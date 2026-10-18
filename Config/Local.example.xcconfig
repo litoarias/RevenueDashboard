@@ -1,0 +1,4 @@
+// Copia este archivo a Config/Local.xcconfig (está en .gitignore) y rellénalo con tus valores.
+PRODUCT_BUNDLE_IDENTIFIER = com.tudominio.revenuedashboard
+DEVELOPMENT_TEAM = TU_TEAM_ID
+GOOGLE_CLIENT_ID = 123456789-abcdef.apps.googleusercontent.com
