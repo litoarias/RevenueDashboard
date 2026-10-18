@@ -1,0 +1,8 @@
+.build/
+*.xcodeproj/xcuserdata/
+xcuserdata/
+.DS_Store
+.swiftpm/
+*.p8
+*.xcodeproj/
+Config/Local.xcconfig
