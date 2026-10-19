@@ -16,6 +16,12 @@ struct DashboardView: View {
     // MARK: Datos derivados
 
     private var filtered: [RevenueEntry] { model.entries.filter { appFilter == nil || $0.app == appFilter } }
+    private var filteredDownloads: [DownloadEntry] { model.downloads.filter { appFilter == nil || $0.app == appFilter } }
+    private var shownDownloads: Int {
+        let all = filteredDownloads
+        guard let d = selectedDay else { return all.reduce(0) { $0 + $1.units } }
+        return all.filter { gran.bucket($0.date) == d }.reduce(0) { $0 + $1.units }
+    }
     private func sum(_ e: [RevenueEntry]) -> Decimal { e.reduce(0) { $0 + $1.eur } }
     private var total: Decimal { sum(filtered) }
     private var connected: Bool { model.hasASC || model.hasGoogle }
@@ -146,6 +152,9 @@ struct DashboardView: View {
             } else {
                 Button("Conecta una fuente") { showSources = true }.buttonStyle(.borderedProminent).tint(.primary)
             }
+            if model.hasASC {
+                Text("\(shownDownloads.formatted()) descargas").font(.system(size: 14)).foregroundStyle(.secondary)
+            }
             Button { showSources = true } label: {
                 HStack(spacing: 8) {
                     SourcePill(name: "Apple", through: model.throughApple, state: appState)
@@ -216,6 +225,8 @@ struct DashboardView: View {
                         HStack(alignment: .firstTextBaseline) {
                             Text(row.name).font(.system(size: 16, weight: .medium)).lineLimit(1)
                             Spacer()
+                            let dl = model.downloads.filter { $0.app == row.name }.reduce(0) { $0 + $1.units }
+                            if model.hasASC { Label(dl.formatted(), systemImage: "arrow.down.circle").font(.system(size: 12)).foregroundStyle(.secondary).padding(.trailing, 10) }
                             Text(eur(row.sum)).font(.serif(18, .regular)).monospacedDigit()
                         }
                         GeometryReader { g in

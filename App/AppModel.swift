@@ -24,6 +24,7 @@ final class AppModel {
     }
     var progress: String?
     var entries: [RevenueEntry] = []
+    var downloads: [DownloadEntry] = []
     var isLoading = false
     var warnings: [String] = []
     var lastUpdate: Date?
@@ -162,6 +163,7 @@ final class AppModel {
                 if (i * 3 + k) % 11 == 0 { out.append(.init(date: d, app: a, source: .iap, eur: Decimal(2.1))) }
             }
         }
+        downloads = out.filter { $0.source == .ads }.map { .init(date: $0.date, app: $0.app, units: Int(NSDecimalNumber(decimal: $0.eur * 9).intValue)) }
         entries = out; throughApple = to; throughAds = to; adsAccount = "pub-0000000000000000"; lastUpdate = .now
         usage = apps.enumerated().map { k, a in
             let p = AnalyticsProperty(id: "properties/\(k)", name: a, account: "Demo")
@@ -231,6 +233,7 @@ final class AppModel {
 
         // Publicación atómica
         entries = RevenueAggregator.combine(sales: sales, appNames: names, ads: ads, rates: rates)
+        downloads = RevenueAggregator.downloads(sales: sales, appNames: names)
         usage = usageResult.usage; propertyCount = usageResult.count; usageError = usageResult.error
         rangeFrom = from; rangeTo = to; loadedDays = n
         throughApple = thruApple; throughAds = thruAds; adsAccount = acct
