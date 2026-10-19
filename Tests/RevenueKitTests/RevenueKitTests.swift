@@ -117,3 +117,16 @@ import Testing
     #expect(scope.contains("admob.readonly") && scope.contains("admob.report") && scope.contains("analytics.readonly"))
     #expect(items.first { $0.name == "prompt" }?.value == "consent")
 }
+
+@Test func downloadsCountOnlyFirstTimeDownloads() {
+    let d = ISO8601DateFormatter().date(from: "2026-10-14T00:00:00Z")!
+    func row(_ type: String, _ units: Int) -> SalesRow {
+        SalesRow(date: d, sku: "ordago-sku", title: "Ordago", appleID: "1", parentID: "", productType: type,
+                 units: units, proceedsPerUnit: 0, proceedsCurrency: "EUR")
+    }
+    let out = RevenueAggregator.downloads(sales: [row("1F", 5), row("1", 2), row("7", 40), row("3F", 9), row("IAY", 3)],
+                                          appNames: ["ordago-sku": "Ordago: Truco"])
+    #expect(out.count == 1)
+    #expect(out[0].app == "Ordago: Truco")
+    #expect(out[0].units == 7)
+}

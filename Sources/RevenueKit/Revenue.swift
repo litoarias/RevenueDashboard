@@ -34,6 +34,14 @@ public struct RevenueEntry: Sendable, Codable, Hashable, Identifiable {
     }
 }
 
+public struct DownloadEntry: Sendable, Codable, Hashable, Identifiable {
+    public let date: Date
+    public let app: String
+    public let units: Int
+    public var id: String { "\(ECBRates.dayKey(date))|\(app)" }
+    public init(date: Date, app: String, units: Int) { self.date = date; self.app = app; self.units = units }
+}
+
 public enum RevenueAggregator {
     static func normalize(_ s: String) -> String {
         s.lowercased().filter { $0.isLetter || $0.isNumber }
@@ -62,5 +70,18 @@ public enum RevenueAggregator {
 
         return acc.map { RevenueEntry(date: $0.key.day, app: $0.key.app, source: $0.key.source, eur: $0.value) }
             .sorted { ($0.date, $0.app, $0.source.rawValue) < ($1.date, $1.app, $1.source.rawValue) }
+    }
+
+    /// Descargas nuevas por día y app (mismo nombre de app que `combine`).
+    public static func downloads(sales: [SalesRow], appNames: [String: String]) -> [DownloadEntry] {
+        struct Key: Hashable { let day: Date; let app: String }
+        var acc: [Key: Int] = [:]
+        for r in sales where r.isDownload {
+            // En las filas de app, el SKU de la propia app es `sku`; `parentID` va vacío.
+            let name = appNames[r.parentID.isEmpty ? r.sku : r.parentID] ?? (r.title.isEmpty ? r.sku : r.title)
+            acc[Key(day: r.date, app: name), default: 0] += r.units
+        }
+        return acc.map { DownloadEntry(date: $0.key.day, app: $0.key.app, units: $0.value) }
+            .sorted { ($0.date, $0.app) < ($1.date, $1.app) }
     }
 }

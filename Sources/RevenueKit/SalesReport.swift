@@ -13,6 +13,10 @@ public struct SalesRow: Sendable, Equatable, Codable {
 
     public var proceeds: Decimal { proceedsPerUnit * Decimal(units) }
 
+    /// Descargas nuevas (no actualizaciones ni redescargas): iPhone/iPad, universal, iPad, Mac y variantes personalizadas.
+    public static let downloadTypes: Set<String> = ["1", "1F", "1T", "F1", "1E", "1EP", "1EU"]
+    public var isDownload: Bool { Self.downloadTypes.contains(productType) }
+
     public var source: RevenueSource {
         switch productType {
         case "IAY", "IAC": .subscription
