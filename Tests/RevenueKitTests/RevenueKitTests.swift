@@ -130,3 +130,15 @@ import Testing
     #expect(out[0].app == "Ordago: Truco")
     #expect(out[0].units == 7)
 }
+
+@Test func downloadsUseCurrentAppNameWhenAppleParentIsWhitespace() {
+    let d = ISO8601DateFormatter().date(from: "2026-10-14T00:00:00Z")!
+    let rows = ["SetReady: Adaptive Rest Timer", "SetReady: Lifting Rest Timer"].map { title in
+        SalesRow(date: d, sku: "SETREADY-IOS", title: title, appleID: "6770435744", parentID: " ",
+                 productType: "1", units: 2, proceedsPerUnit: 0, proceedsCurrency: " ")
+    }
+    let out = RevenueAggregator.downloads(sales: rows, appNames: ["SETREADY-IOS": "SetReady: Lifting Rest Timer"])
+    #expect(out.count == 1)
+    #expect(out.first?.app == "SetReady: Lifting Rest Timer")
+    #expect(out.first?.units == 4)
+}

@@ -13,7 +13,7 @@ struct UsageSection: View {
 
     private let tint = Color(red: 1.0, green: 0.82, blue: 0.25)
 
-    private var props: [PropertyUsage] { model.usage.filter { appFilter == nil || $0.property.name == appFilter } }
+    private var props: [PropertyUsage] { model.usage.filter { appFilter == nil || $0.id == appFilter } }
     private var gran: Granularity { Granularity(days: model.loadedDays) }
     /// Usuarios activos por cubo: suma de apps cada día; en semanas/meses, la media diaria (no se suman días).
     private var daily: [(date: Date, users: Int)] {
@@ -55,6 +55,11 @@ struct UsageSection: View {
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: 10) {
+            if let id = appFilter, let property = model.usage.first(where: { $0.id == id })?.property {
+                Button { appFilter = nil } label: {
+                    Label(property.name, systemImage: "xmark").font(.system(size: 11))
+                }.buttonStyle(.bordered).controlSize(.mini)
+            }
             Eyebrow(text: selectedDay.map { gran.label($0) } ?? "usuarios activos · \(props.count) apps · \(periodShort(model.loadedDays))")
             HeroNumber(text: count(users))
             let new = props.reduce(0) { $0 + $1.newUsers }, sessions = props.reduce(0) { $0 + $1.sessions }
@@ -85,13 +90,13 @@ struct UsageSection: View {
     }
 
     private var ranking: some View {
-        let rows = props.filter { $0.activeUsers > 0 }
+        let rows = props
         let top = max(rows.first?.activeUsers ?? 1, 1)
         return VStack(alignment: .leading, spacing: 18) {
             Eyebrow(text: "Por app")
             if rows.isEmpty { Text(model.isLoading ? "Cargando…" : "Sin actividad en este periodo.").foregroundStyle(.secondary) }
             ForEach(rows) { u in
-                Button { appFilter = appFilter == u.property.name ? nil : u.property.name } label: {
+                Button { appFilter = appFilter == u.id ? nil : u.id } label: {
                     VStack(alignment: .leading, spacing: 7) {
                         HStack(alignment: .firstTextBaseline) {
                             Text(u.property.name).font(.system(size: 16, weight: .medium)).lineLimit(1)

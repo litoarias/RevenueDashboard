@@ -25,6 +25,7 @@ final class AppModel {
     var progress: String?
     var entries: [RevenueEntry] = []
     var downloads: [DownloadEntry] = []
+    var appleAppNames: [String] = []
     var isLoading = false
     var warnings: [String] = []
     var lastUpdate: Date?
@@ -134,15 +135,15 @@ final class AppModel {
             var out: [PropertyUsage] = [], failures: [String] = []
             for chunk in stride(from: 0, to: props.count, by: 4).map({ Array(props[$0..<min($0 + 4, props.count)]) }) {
                 if Task.isCancelled { return UsageResult() }
-                await withTaskGroup(of: Result<PropertyUsage, Error>.self) { group in
-                    for p in chunk { group.addTask { do { return .success(try await client.usage(for: p, days: n)) } catch { return .failure(error) } } }
-                    for await r in group {
-                        switch r { case .success(let u): out.append(u); case .failure(let e): failures.append("\(e)") }
+                await withTaskGroup(of: (String, Result<PropertyUsage, Error>).self) { group in
+                    for p in chunk { group.addTask { do { return (p.name, .success(try await client.usage(for: p, days: n))) } catch { return (p.name, .failure(error)) } } }
+                    for await (name, r) in group {
+                        switch r { case .success(let u): out.append(u); case .failure(let e): failures.append("\(name): \(e)") }
                     }
                 }
             }
             return UsageResult(usage: out.sorted { $0.activeUsers > $1.activeUsers }, count: props.count,
-                               error: failures.isEmpty ? nil : "\(failures.count) de \(props.count) propiedades fallaron: \(failures[0])")
+                               error: failures.isEmpty ? nil : "\(failures.count) de \(props.count) propiedades fallaron: \(failures.sorted().joined(separator: "; "))")
         } catch { return UsageResult(error: "\(error)") }
     }
 
@@ -153,6 +154,7 @@ final class AppModel {
         let to = utc.startOfDay(for: .now).addingTimeInterval(-86400)
         rangeTo = to; rangeFrom = to.addingTimeInterval(-Double(n - 1) * 86400); loadedDays = n
         let apps = ["Mus - El Órdago", "TodaciApp - Todacitan", "SetReady", "Broadside - Sink the Fleet", "Pressure Control"]
+        appleAppNames = apps
         var out: [RevenueEntry] = []
         for i in 0..<n {
             let d = rangeFrom.addingTimeInterval(Double(i) * 86400)
@@ -234,6 +236,7 @@ final class AppModel {
         // Publicación atómica
         entries = RevenueAggregator.combine(sales: sales, appNames: names, ads: ads, rates: rates)
         downloads = RevenueAggregator.downloads(sales: sales, appNames: names)
+        appleAppNames = Array(Set(names.values)).sorted()
         usage = usageResult.usage; propertyCount = usageResult.count; usageError = usageResult.error
         rangeFrom = from; rangeTo = to; loadedDays = n
         throughApple = thruApple; throughAds = thruAds; adsAccount = acct

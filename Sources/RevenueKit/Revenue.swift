@@ -43,6 +43,11 @@ public struct DownloadEntry: Sendable, Codable, Hashable, Identifiable {
 }
 
 public enum RevenueAggregator {
+    private static func appName(for row: SalesRow, appNames: [String: String]) -> String {
+        let parent = row.parentID.trimmingCharacters(in: .whitespacesAndNewlines)
+        return appNames[parent.isEmpty ? row.sku : parent] ?? (row.title.isEmpty ? row.sku : row.title)
+    }
+
     static func normalize(_ s: String) -> String {
         s.lowercased().filter { $0.isLetter || $0.isNumber }
     }
@@ -55,7 +60,7 @@ public enum RevenueAggregator {
         var appleApps = Set(appNames.values)
 
         for r in sales where r.proceeds != 0 {
-            let name = appNames[r.parentID.isEmpty ? r.sku : r.parentID] ?? (r.title.isEmpty ? r.sku : r.title)
+            let name = appName(for: r, appNames: appNames)
             appleApps.insert(name)
             guard let eur = rates.toEUR(r.proceeds, currency: r.proceedsCurrency, on: r.date) else { continue }
             acc[Key(day: r.date, app: name, source: r.source), default: 0] += eur
@@ -78,7 +83,7 @@ public enum RevenueAggregator {
         var acc: [Key: Int] = [:]
         for r in sales where r.isDownload {
             // En las filas de app, el SKU de la propia app es `sku`; `parentID` va vacío.
-            let name = appNames[r.parentID.isEmpty ? r.sku : r.parentID] ?? (r.title.isEmpty ? r.sku : r.title)
+            let name = appName(for: r, appNames: appNames)
             acc[Key(day: r.date, app: name), default: 0] += r.units
         }
         return acc.map { DownloadEntry(date: $0.key.day, app: $0.key.app, units: $0.value) }

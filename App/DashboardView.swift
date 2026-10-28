@@ -9,6 +9,7 @@ struct DashboardView: View {
     @State private var showSettings = false
     @State private var showSources = false
     @State private var appFilter: String?
+    @State private var usageAppFilter: String?
     @State private var selected: Date?
     @State private var mode: Mode = .revenue
     enum Mode: String, CaseIterable { case revenue = "Ingresos", usage = "Uso" }
@@ -75,7 +76,7 @@ struct DashboardView: View {
                     if mode == .revenue {
                         VStack(alignment: .leading, spacing: 36) { hero; composition; chart; apps; footer }
                     } else {
-                        UsageSection(appFilter: $appFilter, openSources: { showSources = true }, openSettings: { showSettings = true }, signIn: signIn)
+                        UsageSection(appFilter: $usageAppFilter, openSources: { showSources = true }, openSettings: { showSettings = true }, signIn: signIn)
                     }
                 }
                 .opacity(model.isLoading ? 0.35 : 1)
@@ -214,7 +215,18 @@ struct DashboardView: View {
 
     private var apps: some View {
         let grouped = Dictionary(grouping: filtered, by: \.app)
-        let rows = grouped.map { (name: $0.key, entries: $0.value, sum: sum($0.value)) }.sorted { $0.sum > $1.sum }
+        var names = Set(model.appleAppNames)
+        names.formUnion(model.entries.map(\.app))
+        names.formUnion(model.downloads.map(\.app))
+        let selectedNames = names.filter { appFilter == nil || $0 == appFilter }
+        var rows: [(name: String, entries: [RevenueEntry], sum: Decimal)] = selectedNames.map { name in
+            let entries: [RevenueEntry] = grouped[name] ?? []
+            return (name: name, entries: entries, sum: sum(entries))
+        }
+        rows.sort { lhs, rhs in
+            if lhs.sum == rhs.sum { return lhs.name < rhs.name }
+            return lhs.sum > rhs.sum
+        }
         let top = rows.first?.sum ?? 1
         return VStack(alignment: .leading, spacing: 18) {
             Eyebrow(text: "Por app")
